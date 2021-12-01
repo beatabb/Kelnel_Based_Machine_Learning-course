@@ -13,8 +13,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier, BaggingClassifier
 
-# num of svms
-N = 10
 
 ### DATA ###
 df = pd.read_csv('dataset/kdd_train.csv')
@@ -22,6 +20,7 @@ d_train = np.array(df)
 d_train_X = d_train[:, 0:-1]
 d_train_y = d_train[:, -1]
 X_train, X_validation, y_train, y_validation = train_test_split(d_train_X, d_train_y, test_size=0.2)
+
 
 train_data = np.concatenate((X_train, np.array(y_train).reshape(len(y_train), 1)), axis=1)
 validation_data = np.concatenate((X_validation, np.array(y_validation).reshape(len(y_validation), 1)), axis=1)
@@ -136,7 +135,7 @@ def pred_bag(X, y, clf):
 #create N svms and return them in list
 
 n = 10
-c_parameters = [1 for i in range(10)]
+c_parameters = [(i+1)*100 for i in range(10)]
 kernel = 'linear'
 
 svms = get_mult_svm(c_parameters=c_parameters, kernel=kernel, n=n)
