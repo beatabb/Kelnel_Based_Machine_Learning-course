@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report
 import pandas as pd
 import time
 from sklearn.preprocessing import MinMaxScaler
@@ -26,6 +26,12 @@ test = np.array(pd.read_csv('dataset/kdd_test.csv'))
 d_test_X = test[:, 0:-1]
 d_test_y = test[:, -1]
 
+sum_class = len(d_train_y)
+
+class_weights = [int(((1 - (list(d_train_y).count(i) / sum_class))/4)*100) for i in range(5)]
+print(class_weights)
+
+
 #############
 
 def prepare_data(data):
@@ -36,7 +42,9 @@ def prepare_data(data):
 
 # create multiple svms and store in array
 def get_mult_svm():
-    SVMs = [SVC(C=(i + 1) * 10, kernel='linear') for i in range(N)]
+    weights = {0: class_weights[0], 1: class_weights[1], 2: class_weights[2], 3: class_weights[3], 4: class_weights[4]}
+
+    SVMs = [SVC(C=(i + 1) * 10, kernel='linear', class_weight=weights) for i in range(N)]
     return SVMs
 
 
@@ -76,6 +84,9 @@ def predict(svms, test_X, test_y):
         y_pred.append(pred)
     y_pred = np.asarray(y_pred)
     print("Accuracy:", accuracy_score(test_y, y_pred))
+    # report
+    cr_matrix = classification_report(test_y, y_pred)
+    print(cr_matrix)
     ### confusion matrix
     cm = confusion_matrix(test_y, y_pred)
     fig, ax = plt.subplots(figsize=(8, 8))
@@ -125,7 +136,7 @@ train(svms)
 
 # svms = load_models()
 # save_models(svms)
-predict(svms, X_validation, y_validation)
+predict(svms, d_test_X, d_test_y)
 
 # clf = train_tree(d_train)
 # pred_tree(test, clf)
