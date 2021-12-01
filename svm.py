@@ -11,11 +11,11 @@ import pickle
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, BaggingClassifier
 
 
 #num of svms
-N = 1
+N = 10
 
 
 ### DATA ###
@@ -33,8 +33,18 @@ def prepare_data(data):
 
 #create multiple svms and store in array
 def get_mult_svm():
-    SVMs = [SVC(C=1, kernel='rbf', gamma=10) for i in range(N)]
+    SVMs = [SVC(C=(i+1)*10, kernel='linear') for i in range(N)]
     return SVMs
+
+def train_baggingClf(data):   
+    print("start training")
+    X = data[:, 0:-1]
+    y = data[:,-1] 
+    print("start training")
+    clf = BaggingClassifier(base_estimator=SVC(kernel="linear", verbose=True),
+                             n_estimators=10, random_state=0)
+    clf.fit(X,y)
+    return clf
 
 #train every svm on the subset
 #cnt is number of rounds
@@ -104,10 +114,16 @@ def pred_tree(test,clf):
     y_pred = clf.predict(X)
     print("Accuracy:", accuracy_score(y, y_pred))
 
+def pred_bag(test,clf):
+    X = test[:, 0:-1]
+    y = test[:,-1] 
+    print("predict")
+    y_pred = clf.predict(X)
+    print("Accuracy:", accuracy_score(y, y_pred))
 
 #create N svms and return them in list
 svms = get_mult_svm()
-print(len(d_train))
+#print(len(d_train))
 #train N svms in cnt rounds
 train(svms, d_train, cnt=1)
 #save_models(svms)
@@ -118,3 +134,6 @@ predict(svms, test=test)
 
 #clf = train_tree(d_train)
 #pred_tree(test, clf)
+
+#clf = train_baggingClf(d_train)
+#pred_bag(test, clf)
