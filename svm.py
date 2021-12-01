@@ -53,16 +53,11 @@ def prepare_data_overlapping(data, n):
 
     return np.array(new_data)
 
-# create multiple svms and store in array
-def get_mult_svm():
-    weights = {0: class_weights[0], 1: class_weights[1], 2: class_weights[2], 3: class_weights[3], 4: class_weights[4]}
-
-    SVMs = [SVC(C=(i + 1) * 10, kernel='linear', class_weight=weights) for i in range(N)]
-    return SVMs
 
 #create multiple svms and store in array
 def get_mult_svm(c_parameters, kernel, n):
-    SVMs = [SVC(C=c_parameters[i], kernel=kernel) for i in range(n)]
+    weights = {0: class_weights[0], 1: class_weights[1], 2: class_weights[2], 3: class_weights[3], 4: class_weights[4]}
+    SVMs = [SVC(C=c_parameters[i], kernel=kernel, class_weight=weights) for i in range(n)]
     return SVMs
 
 #train every svm on the subset
@@ -148,7 +143,7 @@ def pred_bag(X, y, clf):
 #create N svms and return them in list
 
 n = 10
-c_parameters = [(i+1)*100 for i in range(10)]
+c_parameters = [(i+1)*1000 for i in range(10)]
 kernel = 'linear'
 
 svms = get_mult_svm(c_parameters=c_parameters, kernel=kernel, n=n)
