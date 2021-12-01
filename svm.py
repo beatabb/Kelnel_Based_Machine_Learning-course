@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report
 import pandas as pd
 import time
 from sklearn.preprocessing import MinMaxScaler
@@ -28,6 +28,11 @@ validation_data = np.concatenate((X_validation, np.array(y_validation).reshape(l
 
 test = np.array(pd.read_csv('dataset/kdd_test.csv'))
 
+sum_class = len(d_train_y)
+
+class_weights = [int(((1 - (list(d_train_y).count(i) / sum_class))/4)*1000) for i in range(5)]
+
+
 #############
 
 def prepare_data(data, n):
@@ -48,7 +53,12 @@ def prepare_data_overlapping(data, n):
 
     return np.array(new_data)
 
+# create multiple svms and store in array
+def get_mult_svm():
+    weights = {0: class_weights[0], 1: class_weights[1], 2: class_weights[2], 3: class_weights[3], 4: class_weights[4]}
 
+    SVMs = [SVC(C=(i + 1) * 10, kernel='linear', class_weight=weights) for i in range(N)]
+    return SVMs
 
 #create multiple svms and store in array
 def get_mult_svm(c_parameters, kernel, n):
@@ -88,6 +98,9 @@ def predict(svms, test):
         y_pred.append(pred)
     y_pred = np.asarray(y_pred)
     print("Accuracy:", accuracy_score(test_y, y_pred))
+    # report
+    cr_matrix = classification_report(test_y, y_pred)
+    print(cr_matrix)
     ### confusion matrix
     cm = confusion_matrix(test_y, y_pred)
     fig, ax = plt.subplots(figsize=(8, 8))
