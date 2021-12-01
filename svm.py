@@ -14,53 +14,52 @@ import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier, BaggingClassifier
 
 
-#num of svms
-N = 10
-
-
 ### DATA ###
 df = pd.read_csv('dataset/kdd_train.csv')
-d_train= np.array(df)
+train_data= np.array(df)
 test = np.array(pd.read_csv('dataset/kdd_test.csv'))
 #############
 
-def prepare_data(data):
+def prepare_data(data, n):
     #shuffle data on every run
     np.random.shuffle(data)
     #split in N chunks
-    new_data = np.array_split(data, N)
+    new_data = np.array_split(data, n)
     return np.array(new_data)
 
-#create multiple svms and store in array
-def get_mult_svm():
-    SVMs = [SVC(C=(i+1)*10, kernel='linear') for i in range(N)]
-    return SVMs
 
-def train_baggingClf(data):   
-    print("start training")
-    X = data[:, 0:-1]
-    y = data[:,-1] 
-    print("start training")
-    clf = BaggingClassifier(base_estimator=SVC(kernel="linear", verbose=True),
-                             n_estimators=10, random_state=0)
-    clf.fit(X,y)
-    return clf
+def prepare_data_overlapping(data, n):
+    np.random.shuffle(data)
+    temp_buckets = np.array_split(data, n)
+
+    np.random.shuffle(data)
+    new_random_bucks = np.array_split(data, n)
+    new_data = [np.concatenate((np.array(temp_buckets[i]).squeeze(), np.array(new_random_bucks[i]).squeeze()), axis=0) for i in range(len(temp_buckets))]
+
+    return np.array(new_data)
+
+
+
+#create multiple svms and store in array
+def get_mult_svm(c_parameters, kernel, n):
+    SVMs = [SVC(C=c_parameters[i], kernel=kernel) for i in range(n)]
+    return SVMs
 
 #train every svm on the subset
 #cnt is number of rounds
-def train(svms, train_data, cnt):
-    for c in range(cnt):
-        # shuffle data random for every new training round
-        data = prepare_data(train_data)
-        for i in range(len(svms)):
-            d = data[i]
-            X = d[:, 0:-1]
-            y = d[:,-1] 
-            svm = svms[i]
-            start_time = time.time()
-            print("Training of SVM nr " + str(i) + " in round " + str(c+1) + " started at ... " + str(time.time()))
-            svm.fit(X,y)
-            print("--- %s seconds ---" % (time.time() - start_time))
+def train(svms, data):
+
+    # shuffle data random for every new training round
+
+    for i in range(len(svms)):
+        d = data[i]
+        X = d[:, 0:-1]
+        y = d[:,-1] 
+        svm = svms[i]
+        start_time = time.time()
+        print("Training of SVM nr " + str(i) + " started at ... " + str(time.time()))
+        svm.fit(X,y)
+        print("--- %s seconds ---" % (time.time() - start_time))
     return svms
 
 
@@ -79,6 +78,7 @@ def predict(svms, test):
         y_pred.append(pred)
     y_pred = np.asarray(y_pred)  
     print("Accuracy:", accuracy_score(y, y_pred))
+
     ### confusion matrix
     cm = confusion_matrix(y, y_pred)
     fig, ax = plt.subplots(figsize=(8, 8))
@@ -87,6 +87,8 @@ def predict(svms, test):
     plt.title('Confusion Marix of majority voting SVM')
     plt.show()
 
+
+#### Saving and Loading the SVMs
 
 def save_models(models):
     for i in range(len(models)):
@@ -100,6 +102,7 @@ def load_models():
         svms.append(pickle.load(open(filename, 'rb')))
     return svms
 
+### Random Forest Implementation
 
 def train_tree(data):
     X = data[:, 0:-1]
@@ -114,26 +117,26 @@ def pred_tree(test,clf):
     y_pred = clf.predict(X)
     print("Accuracy:", accuracy_score(y, y_pred))
 
-def pred_bag(test,clf):
-    X = test[:, 0:-1]
-    y = test[:,-1] 
-    print("predict")
-    y_pred = clf.predict(X)
-    print("Accuracy:", accuracy_score(y, y_pred))
+
 
 #create N svms and return them in list
-svms = get_mult_svm()
+
+n = 10
+c_parameters = [1 for i in range(10)]
+kernel = 'linear'
+
+svms = get_mult_svm(c_parameters=c_parameters, kernel=kernel, n=n)
+#data = prepare_data(train_data, n)
+data = prepare_data_overlapping(train_data, n)
 #print(len(d_train))
 #train N svms in cnt rounds
-train(svms, d_train, cnt=1)
+train(svms, data)
 #save_models(svms)
-
 #svms = load_models()
 #save_models(svms)
 predict(svms, test=test)
 
-#clf = train_tree(d_train)
-#pred_tree(test, clf)
+clf = train_tree(train_data)
+pred_tree(test, clf)
 
-#clf = train_baggingClf(d_train)
-#pred_bag(test, clf)
+
