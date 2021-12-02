@@ -1,0 +1,81 @@
+5 machines, c-parameter: 1e-05
+Training of SVM nr 0 started at ... 1638452305.4688203
+Training of SVM nr 1 started at ... 1638452318.4362257
+Training of SVM nr 2 started at ... 1638452331.0204167
+Training of SVM nr 3 started at ... 1638452343.71106
+Training of SVM nr 4 started at ... 1638452356.465808
+--- 64.23186182975769 seconds ---
+Accuracy: 0.9516570748164318
+F1: 0.5628295230976492
+5 machines, c-parameter: 0.0001
+Training of SVM nr 0 started at ... 1638452430.5460763
+Training of SVM nr 1 started at ... 1638452436.864009
+Training of SVM nr 2 started at ... 1638452442.7291093
+Training of SVM nr 3 started at ... 1638452448.7952986
+Training of SVM nr 4 started at ... 1638452454.8926516
+--- 30.56966733932495 seconds ---
+Accuracy: 0.9715022821988489
+F1: 0.5810734182403003
+5 machines, c-parameter: 0.001
+Training of SVM nr 0 started at ... 1638452494.8862894
+Training of SVM nr 1 started at ... 1638452498.2394717
+Training of SVM nr 2 started at ... 1638452501.3547404
+Training of SVM nr 3 started at ... 1638452504.6786659
+Training of SVM nr 4 started at ... 1638452508.1923985
+--- 16.636412620544434 seconds ---
+Accuracy: 0.9744393728914467
+F1: 0.7025290228572952
+5 machines, c-parameter: 0.01
+Training of SVM nr 0 started at ... 1638452534.113738
+Training of SVM nr 1 started at ... 1638452536.46888
+Training of SVM nr 2 started at ... 1638452538.7925322
+Training of SVM nr 3 started at ... 1638452541.0096066
+Training of SVM nr 4 started at ... 1638452543.5336297
+--- 11.825227737426758 seconds ---
+Accuracy: 0.9799166501289939
+F1: 0.8687006880262274
+5 machines, c-parameter: 0.1
+Training of SVM nr 0 started at ... 1638452562.318601
+Training of SVM nr 1 started at ... 1638452564.5907838
+Training of SVM nr 2 started at ... 1638452566.8802383
+Training of SVM nr 3 started at ... 1638452568.9035282
+Training of SVM nr 4 started at ... 1638452571.438122
+--- 11.493860483169556 seconds ---
+Accuracy: 0.9863861877356619
+F1: 0.8879552733614735
+5 machines, c-parameter: 1
+Training of SVM nr 0 started at ... 1638452587.9647632
+Training of SVM nr 1 started at ... 1638452591.3272867
+Training of SVM nr 2 started at ... 1638452594.598802
+Training of SVM nr 3 started at ... 1638452597.5394535
+Training of SVM nr 4 started at ... 1638452601.1785436
+--- 16.29077672958374 seconds ---
+Accuracy: 0.9881325659853145
+F1: 0.8858058132648143
+5 machines, c-parameter: 10
+Training of SVM nr 0 started at ... 1638452617.0039618
+Training of SVM nr 1 started at ... 1638452626.9515772
+Training of SVM nr 2 started at ... 1638452634.3285782
+Training of SVM nr 3 started at ... 1638452641.3277326
+Training of SVM nr 4 started at ... 1638452650.1399798
+--- 40.121026039123535 seconds ---
+Accuracy: 0.9896804921611431
+F1: 0.8659287709133187
+5 machines, c-parameter: 100
+Training of SVM nr 0 started at ... 1638452669.6533346
+Training of SVM nr 1 started at ... 1638452709.1300564
+Training of SVM nr 2 started at ... 1638452734.4573476
+Training of SVM nr 3 started at ... 1638452772.3273835
+Training of SVM nr 4 started at ... 1638452805.0575058
+--- 163.20548605918884 seconds ---
+Accuracy: 0.9900377058940266
+F1: 0.8684582373183389
+5 machines, c-parameter: 1000
+Training of SVM nr 0 started at ... 1638452843.8823423
+Training of SVM nr 1 started at ... 1638453160.7979622
+Training of SVM nr 2 started at ... 1638453335.277081
+Training of SVM nr 3 started at ... 1638453478.9141388
+Training of SVM nr 4 started at ... 1638453666.9658232
+--- 1036.3896181583405 seconds ---
+Accuracy: 0.9896804921611431
+F1: 0.861982212637342

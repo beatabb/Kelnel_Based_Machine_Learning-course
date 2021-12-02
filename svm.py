@@ -168,9 +168,9 @@ def pred_bag(X, y, clf):
 
 #create N svms and return them in list
 
-ns = [5, 7, 10]
+ns = [5]
 cs = [10**(-5), 10**(-4), 10**(-3), 10**(-2), 10**(-1), 1, 10, 100, 1000]
-cs = [1,2 ]
+
 kernel = 'linear'
 
 
@@ -196,7 +196,7 @@ for n in ns:
         #save_models(svms)
         acc, f1 = predict(svms, test=validation_data)
         df = df.append({'num_svms': n, 'c': c, 'acc': acc, 'f1': f1, 'time': t}, ignore_index=True)
-df.to_csv('results/results.csv')
+df.to_csv('results/results_5.csv')
 
 
 
