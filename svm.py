@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, f1_score, recall_score, precision_score
 import pandas as pd
 import time
 from sklearn.preprocessing import MinMaxScaler
@@ -36,20 +36,34 @@ class_weights = [int(((1 - (list(d_train_y).count(i) / sum_class))/4)*1000) for 
 #############
 
 def prepare_data(data, n):
-    #shuffle data on every run
-    np.random.shuffle(data)
-    #split in N chunks
-    new_data = np.array_split(data, n)
+    check = False
+    while(not check):
+        #shuffle data on every run
+        np.random.shuffle(data)
+        #split in N chunks
+        new_data = np.array_split(data, n)
+        check = True
+        for arr in new_data: 
+            if len(np.unique(np.array(arr)[:,-1])) < 5:
+                check = False
     return np.array(new_data)
 
 
 def prepare_data_overlapping(data, n):
-    np.random.shuffle(data)
-    temp_buckets = np.array_split(data, n)
+    new_data = []
+    check=False
+    while(not check):
+        np.random.shuffle(data)
+        temp_buckets = np.array_split(data, n)
 
-    np.random.shuffle(data)
-    new_random_bucks = np.array_split(data, n)
-    new_data = [np.concatenate((np.array(temp_buckets[i]).squeeze(), np.array(new_random_bucks[i]).squeeze()), axis=0) for i in range(len(temp_buckets))]
+        np.random.shuffle(data)
+        new_random_bucks = np.array_split(data, n)
+        new_data = [np.concatenate((np.array(temp_buckets[i]).squeeze(), np.array(new_random_bucks[i]).squeeze()), axis=0) for i in range(len(temp_buckets))]
+        check = True
+        for arr in new_data: 
+            if len(np.unique(np.array(arr)[:,-1])) < 5:
+                check = False
+        
 
     return np.array(new_data)
 
@@ -65,17 +79,19 @@ def get_mult_svm(c_parameters, kernel, n):
 def train(svms, data):
 
     # shuffle data random for every new training round
+    start_time = time.time()
 
     for i in range(len(svms)):
         d = data[i]
         X = d[:, 0:-1]
         y = d[:,-1] 
         svm = svms[i]
-        start_time = time.time()
         print("Training of SVM nr " + str(i) + " started at ... " + str(time.time()))
         svm.fit(X,y)
-        print("--- %s seconds ---" % (time.time() - start_time))
-    return svms
+    print("--- %s seconds ---" % (time.time() - start_time))
+    t = (time.time() - start_time)
+
+    return svms, t
 
 
 def predict(svms, test):
@@ -92,17 +108,27 @@ def predict(svms, test):
         pred = np.bincount(pred).argmax()
         y_pred.append(pred)
     y_pred = np.asarray(y_pred)
-    print("Accuracy:", accuracy_score(test_y, y_pred))
+    acc = accuracy_score(test_y, y_pred)
+    f1 = f1_score(test_y, y_pred, average='macro')
+    print("Accuracy:", acc)
+    print("F1:", f1)
+
+    return acc, f1
+    # print("Recall:", recall_score(test_y, y_pred))
+    # print("Precision:", precision_score(test_y, y_pred))
+
+
     # report
-    cr_matrix = classification_report(test_y, y_pred)
-    print(cr_matrix)
+    # cr_matrix = classification_report(test_y, y_pred)
+    # print(cr_matrix)
+
     ### confusion matrix
-    cm = confusion_matrix(test_y, y_pred)
-    fig, ax = plt.subplots(figsize=(8, 8))
-    ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["normal", "DoS", "Probe", "U2R", "R2L"]
-                           ).plot(ax=ax)
-    plt.title('Confusion Marix of majority voting SVM')
-    plt.show()
+    # cm = confusion_matrix(test_y, y_pred)
+    # fig, ax = plt.subplots(figsize=(8, 8))
+    # ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["normal", "DoS", "Probe", "U2R", "R2L"]
+    #                        ).plot(ax=ax)
+    # plt.title('Confusion Marix of majority voting SVM')
+    # plt.show()
 
 
 #### Saving and Loading the SVMs
@@ -142,22 +168,38 @@ def pred_bag(X, y, clf):
 
 #create N svms and return them in list
 
-n = 10
-c_parameters = [(i+1)*1000 for i in range(10)]
+ns = [5, 7, 10]
+cs = [10**(-5), 10**(-4), 10**(-3), 10**(-2), 10**(-1), 1, 10, 100, 1000]
+cs = [1,2 ]
 kernel = 'linear'
 
-svms = get_mult_svm(c_parameters=c_parameters, kernel=kernel, n=n)
-data = prepare_data(train_data, n)
-#data = prepare_data_overlapping(train_data, n)
-#print(len(d_train))
-#train N svms in cnt rounds
-train(svms, data)
-#save_models(svms)
-#svms = load_models()
-#save_models(svms)
-predict(svms, test=test)
 
-clf = train_tree(train_data)
-pred_tree(test, clf)
+# data = prepare_data_overlapping(train_data, n)
+
+column_names = ['num_svms', 'c', 'acc', 'f1', 'time']
+df = pd.DataFrame(columns = column_names)
 
 
+for n in ns:
+    data = prepare_data(train_data, n)
+    for c in cs:
+        c_parameters = [c for i in range(n)]
+        print(str(n) + " machines, c-parameter: " + str(c) )
+        svms = get_mult_svm(c_parameters=c_parameters, kernel=kernel, n=n)
+        
+        #data = prepare_data_overlapping(train_data, n)
+        #print(len(d_train))
+        #train N svms in cnt rounds
+        svms, t = train(svms, data)
+        #save_models(svms)
+        #svms = load_models()
+        #save_models(svms)
+        acc, f1 = predict(svms, test=validation_data)
+        df = df.append({'num_svms': n, 'c': c, 'acc': acc, 'f1': f1, 'time': t}, ignore_index=True)
+df.to_csv('results/results.csv')
+
+
+
+
+# clf = train_tree(train_data)
+# pred_tree(test, clf)
