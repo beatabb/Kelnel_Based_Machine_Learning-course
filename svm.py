@@ -142,8 +142,8 @@ def pred_bag(X, y, clf):
 
 #create N svms and return them in list
 
-n = 10
-c_parameters = [(i+1)*1000 for i in range(10)]
+n = 15
+c_parameters = [(i+1)*10 for i in range(n)]
 kernel = 'linear'
 
 svms = get_mult_svm(c_parameters=c_parameters, kernel=kernel, n=n)
@@ -157,7 +157,7 @@ train(svms, data)
 #save_models(svms)
 predict(svms, test=test)
 
-clf = train_tree(train_data)
-pred_tree(test, clf)
+# clf = train_tree(train_data)
+# pred_tree(test, clf)
 
 
