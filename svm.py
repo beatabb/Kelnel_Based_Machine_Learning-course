@@ -1,11 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.random.mtrand import seed
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, f1_score, recall_score, precision_score
 import pandas as pd
 import time
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.utils import validation
 from preprocess import preprocess
 import pickle
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
@@ -23,8 +25,11 @@ X_train, X_validation, y_train, y_validation = train_test_split(d_train_X, d_tra
 
 
 train_data = np.concatenate((X_train, np.array(y_train).reshape(len(y_train), 1)), axis=1)
-validation_data = np.concatenate((X_validation, np.array(y_validation).reshape(len(y_validation), 1)), axis=1)
+#validation_data = np.concatenate((X_validation, np.array(y_validation).reshape(len(y_validation), 1)), axis=1)
 
+#pd.DataFrame(validation_data).to_csv('dataset/validation_data.csv')
+
+validation_data =pd.read_csv("dataset/validation_data.csv")
 
 test = np.array(pd.read_csv('dataset/kdd_test.csv'))
 
@@ -39,7 +44,6 @@ def prepare_data(data, n):
     check = False
     while(not check):
         #shuffle data on every run
-        np.random.shuffle(data)
         #split in N chunks
         new_data = np.array_split(data, n)
         check = True
@@ -53,9 +57,9 @@ def prepare_data_overlapping(data, n):
     new_data = []
     check=False
     while(not check):
-        np.random.shuffle(data)
+        #np.random.shuffle(data)
         temp_buckets = np.array_split(data, n)
-
+        np.random.seed(42) 
         np.random.shuffle(data)
         new_random_bucks = np.array_split(data, n)
         new_data = [np.concatenate((np.array(temp_buckets[i]).squeeze(), np.array(new_random_bucks[i]).squeeze()), axis=0) for i in range(len(temp_buckets))]
@@ -109,13 +113,16 @@ def predict(svms, test):
         y_pred.append(pred)
     y_pred = np.asarray(y_pred)
     acc = accuracy_score(test_y, y_pred)
-    f1 = f1_score(test_y, y_pred, average='macro')
+    f1 = f1_score(test_y, y_pred, average='weighted')
+    rec = recall_score(test_y, y_pred, average='weighted')
+    prec = precision_score(test_y, y_pred, average='weighted')
     print("Accuracy:", acc)
     print("F1:", f1)
+    print("Recall:", rec)
+    print("Precision:", prec)
 
-    return acc, f1
-    # print("Recall:", recall_score(test_y, y_pred))
-    # print("Precision:", precision_score(test_y, y_pred))
+    return acc, f1, rec, prec
+    
 
 
     # report
@@ -133,9 +140,9 @@ def predict(svms, test):
 
 #### Saving and Loading the SVMs
 
-def save_models(models):
+def save_models(models, d, n, c):
     for i in range(len(models)):
-        filename = 'models/svm_{}.sav'.format(i)
+        filename = 'models/svm_{}_data_{}_n_{}_c_{}.sav'.format(i, d, n, c)
         pickle.dump(models[i], open(filename, 'wb'))
 
 
@@ -167,39 +174,97 @@ def pred_bag(X, y, clf):
 
 
 #create N svms and return them in list
-
-ns = [5, 7, 10]
-cs = [10**(-5), 10**(-4), 10**(-3), 10**(-2), 10**(-1), 1, 10, 100, 1000]
-cs = [1,2 ]
-kernel = 'linear'
-
-
-# data = prepare_data_overlapping(train_data, n)
-
-column_names = ['num_svms', 'c', 'acc', 'f1', 'time']
-df = pd.DataFrame(columns = column_names)
+def parameter_eval():
+    ns = [5, 7, 10]
+    cs = [10**(-5), 10**(-4), 10**(-3), 10**(-2), 10**(-1), 1, 10, 100, 1000]
+    kernel = 'linear'
 
 
-for n in ns:
-    data = prepare_data(train_data, n)
-    for c in cs:
-        c_parameters = [c for i in range(n)]
-        print(str(n) + " machines, c-parameter: " + str(c) )
-        svms = get_mult_svm(c_parameters=c_parameters, kernel=kernel, n=n)
-        
-        #data = prepare_data_overlapping(train_data, n)
-        #print(len(d_train))
-        #train N svms in cnt rounds
-        svms, t = train(svms, data)
-        #save_models(svms)
-        #svms = load_models()
-        #save_models(svms)
-        acc, f1 = predict(svms, test=validation_data)
-        df = df.append({'num_svms': n, 'c': c, 'acc': acc, 'f1': f1, 'time': t}, ignore_index=True)
-df.to_csv('results/results.csv')
+    # data = prepare_data_overlapping(train_data, n)
+
+    column_names = ['num_svms', 'c', 'acc', 'f1', 'time']
+    df = pd.DataFrame(columns = column_names)
+
+    # np.random.shuffle(train_data)
+    # print(np.array(train_data).shape)
+    # pd.DataFrame(np.array(train_data)).to_csv('random_train_data.csv')
+
+    train_data = np.asarray(pd.read_csv('random_train_data.csv'))
+
+    train_data = np.delete(train_data, 0, axis=1)
+
+
+    for n in ns:
+        data = prepare_data_overlapping(train_data, n)
+        for c in cs:
+            c_parameters = [c for i in range(n)]
+            print(str(n) + " machines, c-parameter: " + str(c) )
+            svms = get_mult_svm(c_parameters=c_parameters, kernel=kernel, n=n)
+            
+            #data = prepare_data_overlapping(train_data, n)
+            #print(len(d_train))
+            #train N svms in cnt rounds
+            svms, t = train(svms, data)
+            #save_models(svms)
+            #svms = load_models()
+            #save_models(svms)
+            acc, f1, rec, prec = predict(svms, test=validation_data)
+            df = df.append({'num_svms': n, 'c': c, 'acc': acc, 'f1': f1, 'recall': rec, 'precision':prec ,'time': t}, ignore_index=True)
+        df.to_csv('results/overlap_params_results.csv')
 
 
 
+def exp2():
+    n = 5
+    data = ['overlap']
+    cs = [
+        [10,10,10,10,10], [100,100,100,100,100], [1000,1000,1000,1000,1000],
+        [10,10,10,10,100], [10,10,10,10,1000], [100, 100, 100, 100, 10], [100, 100, 100, 100, 1000], [1000, 1000, 1000, 1000, 10], [1000, 1000, 1000, 1000, 100],
+        [10, 10, 10, 100, 100], [10, 10, 10, 1000, 1000], [100, 100, 100, 10, 10], [100, 100, 100, 1000, 1000], [1000, 1000, 1000, 10, 10], [1000, 1000, 1000, 100, 100],
+        [10,10,10,100,1000], [100,100,100,10,1000], [1000,1000,1000,10,100],
+        [10,10,100,100,1000], [10,10,1000,1000,100], [100,100,1000,1000,10]
+        ]
 
+
+
+    kernel = 'linear'
+
+
+    # data = prepare_data_overlapping(train_data, n)
+
+    column_names = ['data','num_svms', 'c', 'acc', 'f1', 'time']
+    df = pd.DataFrame(columns = column_names)
+
+    # np.random.shuffle(train_data)
+    # print(np.array(train_data).shape)
+    # pd.DataFrame(np.array(train_data)).to_csv('random_train_data.csv')
+
+    train_data = np.asarray(pd.read_csv('random_train_data.csv'))
+
+    train_data = np.delete(train_data, 0, axis=1)
+
+    for d in data:
+        if d == 'non': data = prepare_data(train_data, n)
+        else: data = prepare_data_overlapping(train_data, n)
+        for c in cs:
+            print(str(n) + " machines, c-parameter: " + str(c) + 'data: ' + d)
+            svms = get_mult_svm(c_parameters=c, kernel=kernel, n=n)
+            
+            #data = prepare_data_overlapping(train_data, n)
+            #print(len(d_train))
+            #train N svms in cnt rounds
+            svms, t = train(svms, data)
+            save_models(svms, d, n, c)
+            print("... models saved ...")
+            #svms = load_models()
+            #save_models(svms)
+            acc, f1, rec, prec = predict(svms, test=test)
+            print('time: {} f1: {}'.format(t,f1))
+            df = df.append({'data':d, 'num_svms': n, 'c': c, 'acc': acc, 'f1': f1, 'recall': rec, 'precision':prec ,'time': t}, ignore_index=True)
+            df.to_csv('results/experiment_overlap_results.csv')
+
+
+#exp2()
+parameter_eval()
 # clf = train_tree(train_data)
 # pred_tree(test, clf)
