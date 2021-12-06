@@ -25,11 +25,11 @@ X_train, X_validation, y_train, y_validation = train_test_split(d_train_X, d_tra
 
 
 train_data = np.concatenate((X_train, np.array(y_train).reshape(len(y_train), 1)), axis=1)
-#validation_data = np.concatenate((X_validation, np.array(y_validation).reshape(len(y_validation), 1)), axis=1)
+validation_data = np.concatenate((X_validation, np.array(y_validation).reshape(len(y_validation), 1)), axis=1)
 
 #pd.DataFrame(validation_data).to_csv('dataset/validation_data.csv')
 
-validation_data =pd.read_csv("dataset/validation_data.csv")
+#validation_data =pd.read_csv("dataset/validation_data.csv")
 
 test = np.array(pd.read_csv('dataset/kdd_test.csv'))
 
@@ -175,7 +175,7 @@ def pred_bag(X, y, clf):
 
 #create N svms and return them in list
 def parameter_eval():
-    ns = [5, 7, 10]
+    ns = [ 7, 10]
     cs = [10**(-5), 10**(-4), 10**(-3), 10**(-2), 10**(-1), 1, 10, 100, 1000]
     kernel = 'linear'
 
@@ -215,14 +215,16 @@ def parameter_eval():
 
 
 def exp2():
-    n = 5
+    n = 7
     data = ['overlap']
     cs = [
-        [10,10,10,10,10], [100,100,100,100,100], [1000,1000,1000,1000,1000],
-        [10,10,10,10,100], [10,10,10,10,1000], [100, 100, 100, 100, 10], [100, 100, 100, 100, 1000], [1000, 1000, 1000, 1000, 10], [1000, 1000, 1000, 1000, 100],
-        [10, 10, 10, 100, 100], [10, 10, 10, 1000, 1000], [100, 100, 100, 10, 10], [100, 100, 100, 1000, 1000], [1000, 1000, 1000, 10, 10], [1000, 1000, 1000, 100, 100],
-        [10,10,10,100,1000], [100,100,100,10,1000], [1000,1000,1000,10,100],
-        [10,10,100,100,1000], [10,10,1000,1000,100], [100,100,1000,1000,10]
+        [10,10,10,10,10, 10,10], [100,100,100,100,100,100, 100], [1000,1000,1000,1000,1000,1000,1000],
+        [10,10,10,10,10,10,100], [10,10,10,10,10,10,1000], [100, 100, 100, 100,100,100, 10], [100, 100, 100, 100,100,100, 1000], [1000, 1000, 1000, 1000,1000,1000, 10], [1000, 1000, 1000, 1000,1000,1000, 100],
+        [10, 10, 10,10,10, 100, 100], [10, 10, 10,10,10, 1000, 1000], [100, 100, 100,100,100, 10, 10], [100, 100, 100,100,100, 1000, 1000], [1000, 1000, 1000,1000,1000, 10, 10], [1000, 1000, 1000, 1000,1000, 100, 100],
+        [10, 10, 10,10,100, 100, 100], [10, 10, 10,10,1000, 1000, 1000], [100, 100, 100,100,10, 10, 10], [100, 100, 100,100,1000, 1000, 1000], [1000, 1000, 1000,1000,10, 10, 10], [1000, 1000, 1000, 1000,100, 100, 100],
+        [10,10,10,10,10,100,1000], [100,100,100,100,100,10,1000], [1000,1000,1000,1000,1000,10,100],
+        [10,10,10,10,100,100,1000], [10,10,10,10,100,1000,1000],[100,100,100,100,10,10,1000], [100,100,100,100,10,1000,1000], [1000,1000,1000,1000,10,10,100], [1000,1000,1000,1000,10,100,100],
+        [10,10,10,100,100,100,1000],[10,10,10,100,100,1000,1000],[10,10,10,100,1000,1000,1000], [100,100,100,10,10,10,1000],[100,100,100,10,10,1000,1000],[100,100,100,10,1000,1000,1000], [100,100,10,10,1000,1000,1000], 
         ]
 
 
@@ -265,6 +267,23 @@ def exp2():
 
 
 #exp2()
-parameter_eval()
+#parameter_eval()
 # clf = train_tree(train_data)
 # pred_tree(test, clf)
+
+column_names = ['data','num_svms', 'c', 'acc', 'f1', 'time']
+df = pd.DataFrame(columns = column_names)
+cs = [10,100,1000]
+for c in cs:
+    svms = get_mult_svm(c_parameters=[c], kernel='linear', n=1)
+    train_data = np.asarray(pd.read_csv('random_train_data.csv'))
+    train_data = np.delete(train_data, 0, axis=1)
+    X = train_data[:, 0:-1]
+    y = train_data[:,-1] 
+    start_time = time.time()
+    svms[0].fit(X,y)
+    t = (time.time() - start_time)
+    acc, f1, rec, prec = predict(svms, test=test)
+    print('time: {} f1: {}'.format(t,f1))
+    df = df.append({'data': 'non', 'num_svms': 1, 'c': c, 'acc': acc, 'f1': f1, 'recall': rec, 'precision':prec ,'time': t}, ignore_index=True)
+    df.to_csv('results/results_single_svm.csv')
