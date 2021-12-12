@@ -146,10 +146,10 @@ def save_models(models, d, n, c):
         pickle.dump(models[i], open(filename, 'wb'))
 
 
-def load_models():
+def load_models(n, c, data):
     svms = []
-    for i in range(N):
-        filename = 'models/svm_{}.sav'.format(i)
+    for i in range(n):
+        filename = 'models/svm_{}_data_{}_n_{}_c_{}.sav'.format(i, data, n, c)
         svms.append(pickle.load(open(filename, 'rb')))
     return svms
 
@@ -214,7 +214,8 @@ def parameter_eval():
 
 
 
-def exp2():
+
+def experimentation_and_training():
     n = 7
     data = ['overlap']
     cs = [
@@ -226,7 +227,6 @@ def exp2():
         [10,10,10,10,100,100,1000], [10,10,10,10,100,1000,1000],[100,100,100,100,10,10,1000], [100,100,100,100,10,1000,1000], [1000,1000,1000,1000,10,10,100], [1000,1000,1000,1000,10,100,100],
         [10,10,10,100,100,100,1000],[10,10,10,100,100,1000,1000],[10,10,10,100,1000,1000,1000], [100,100,100,10,10,10,1000],[100,100,100,10,10,1000,1000],[100,100,100,10,1000,1000,1000], [100,100,10,10,1000,1000,1000], 
         ]
-
 
 
     kernel = 'linear'
@@ -266,24 +266,40 @@ def exp2():
             df.to_csv('results/experiment_overlap_results.csv')
 
 
-#exp2()
-#parameter_eval()
-# clf = train_tree(train_data)
-# pred_tree(test, clf)
 
-column_names = ['data','num_svms', 'c', 'acc', 'f1', 'time']
-df = pd.DataFrame(columns = column_names)
-cs = [10,100,1000]
-for c in cs:
-    svms = get_mult_svm(c_parameters=[c], kernel='linear', n=1)
-    train_data = np.asarray(pd.read_csv('random_train_data.csv'))
-    train_data = np.delete(train_data, 0, axis=1)
-    X = train_data[:, 0:-1]
-    y = train_data[:,-1] 
-    start_time = time.time()
-    svms[0].fit(X,y)
-    t = (time.time() - start_time)
+
+
+def run_single_experiment():
+
+    column_names = ['data','num_svms', 'c', 'acc', 'f1', 'time']
+    df = pd.DataFrame(columns = column_names)
+    cs = [10,100,1000]
+    for c in cs:
+        svms = get_mult_svm(c_parameters=[c], kernel='linear', n=1)
+        train_data = np.asarray(pd.read_csv('random_train_data.csv'))
+        train_data = np.delete(train_data, 0, axis=1)
+        X = train_data[:, 0:-1]
+        y = train_data[:,-1] 
+        start_time = time.time()
+        svms[0].fit(X,y)
+        t = (time.time() - start_time)
+        acc, f1, rec, prec = predict(svms, test=test)
+        print('time: {} f1: {}'.format(t,f1))
+        df = df.append({'data': 'non', 'num_svms': 1, 'c': c, 'acc': acc, 'f1': f1, 'recall': rec, 'precision':prec ,'time': t}, ignore_index=True)
+        df.to_csv('results/results_single_svm.csv')
+
+
+
+
+# runs the final model which turned out to be the best (u can also change parameters to load other svms into the ensemble)
+def run_final_model():
+    n = 5 
+    c = [100 for i in range(5)]
+    data = 'non'
+    svms = load_models(n, c, data)
+    #save_models(svms)
     acc, f1, rec, prec = predict(svms, test=test)
-    print('time: {} f1: {}'.format(t,f1))
-    df = df.append({'data': 'non', 'num_svms': 1, 'c': c, 'acc': acc, 'f1': f1, 'recall': rec, 'precision':prec ,'time': t}, ignore_index=True)
-    df.to_csv('results/results_single_svm.csv')
+    print('Acc: {} f1: {} recall: {} precision: {} '.format(acc, f1, rec, prec))
+
+
+run_final_model()
