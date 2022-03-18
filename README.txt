@@ -1,3 +1,5 @@
+## Final report -> Report Assignment KMLMM 12.12.pdf
+
 The code was used for experimentation and is therefore not written to be run in once. 
 
 If you want to run the final model (non-overlapping SVM ensemble with best parameters) you need to do:
